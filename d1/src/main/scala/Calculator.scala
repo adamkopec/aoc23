@@ -1,8 +1,6 @@
-import scala.annotation.tailrec
 import scala.io.Source
 
 object Calculator extends App {
-
   Console.println(FileCalculator.sumFile(Source.fromResource("input.txt")))
 }
 
@@ -14,42 +12,30 @@ object FileCalculator {
 }
 
 object CalculatorLogic {
-  private val numbers: List[(String, Int)] = List(
-    "one",
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine"
-  ).zipWithIndex.map { case (n, v) => (n, v + 1) }
+  val regex = """\d|one|two|three|four|five|six|seven|eight|nine""".r
+  val digitsMap = Map(
+    "one" -> 1,
+    "two" -> 2,
+    "three" -> 3,
+    "four" -> 4,
+    "five" -> 5,
+    "six" -> 6,
+    "seven" -> 7,
+    "eight" -> 8,
+    "nine" -> 9
+  )
 
   def lineValue(line: String): Int = {
-    @tailrec
-    def replaceLine(in: String): String = {
-      val firstFound = numbers
-        .map { case (n, v) => (n, v, in.indexOf(n)) }
-        .filterNot { case (_, _, p) => p == -1 }
-        .sortBy { case (_, _, p) => p }
-        .headOption
-
-      if (firstFound.isDefined) {
-        val (n, v, _) = firstFound.get
-        replaceLine(in.replaceFirst(n, v.toString))
-      } else
-        in
+    val all = Vector.unfold(line) { line =>
+      for {
+        m <- regex.findFirstMatchIn(line)
+        ds = m.matched
+        di = digitsMap.getOrElse(ds, ds.toInt)
+      } yield (di, line.substring(m.start + 1))
     }
 
-    val replaced = replaceLine(line)
-
-    val number = replaced.filter(_.isDigit)
-
-    val first = number.head
-    val last = number.last
-
-    val result = s"$first$last".toInt
-    result
+    val f = all.head
+    val l = all.last
+    f * 10 + l
   }
 }
